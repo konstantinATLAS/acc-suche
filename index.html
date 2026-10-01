@@ -128,6 +128,7 @@
     background: linear-gradient(180deg, #FFB24E, #F2842A);
     box-shadow: 0 10px 28px rgba(242, 132, 42, .32), inset 0 1px 0 rgba(255, 255, 255, .35); }
   .login-fuss { margin-top: 14px; font-size: 12.5px; color: rgba(255, 255, 255, .5); }
+  .login-fuss.hinweis-login { color: #FFC9A8; font-size: 13.5px; }
   .alternativ { margin: 14px 0 10px; background: var(--paper); border-radius: var(--r); padding: 13px 14px;
     box-shadow: 0 0 0 1px var(--line); }
   .alternativ .alt-titel { font-weight: 600; font-size: 15px; margin-bottom: 2px; }
@@ -159,7 +160,7 @@
 <link rel="manifest" href="manifest.webmanifest">
 <script>
   // Ohne Anmeldung gar nicht erst die Suchleiste zeigen (kein Aufblitzen vor der Anmeldemaske)
-  try { if (!localStorage.getItem('acc_token') && !/[#&]t=/.test(location.hash)) document.documentElement.classList.add('ohne-login'); }
+  try { if (!localStorage.getItem('acc_token') && !/[#&](t|id_token)=/.test(location.hash)) document.documentElement.classList.add('ohne-login'); }
   catch (e) { document.documentElement.classList.add('ohne-login'); }
 </script>
 <style>
@@ -216,29 +217,65 @@
 
 <script>
 var DATENQUELLE = (function () {
-  var API = "https://script.google.com/macros/s/AKfycbzclONJE3mTbhdtIYOIwNdxiLSq-9oKwb_e67Gnd0QT1pHueKWDIfm-E3G2r6jcPuC1/exec", LOGIN = "https://script.google.com/a/macros/atlasoperations.de/s/AKfycby0pHkULdPViSxz5jKb4lS4NKtCTbmirKZ_lk4V3-qHPfui7cgUkzSn3fr_vmzG4DaH/exec?login=1", KEY = 'acc_token';
+  var API = "https://script.google.com/macros/s/AKfycbzclONJE3mTbhdtIYOIwNdxiLSq-9oKwb_e67Gnd0QT1pHueKWDIfm-E3G2r6jcPuC1/exec", LOGIN_A = "https://script.google.com/a/macros/atlasoperations.de/s/AKfycby0pHkULdPViSxz5jKb4lS4NKtCTbmirKZ_lk4V3-qHPfui7cgUkzSn3fr_vmzG4DaH/exec?login=1", CLIENT_ID = "", SEITE = "https://konstantinatlas.github.io/acc-suche/", KEY = 'acc_token';
   function token() { try { return localStorage.getItem(KEY) || ''; } catch (e) { return ''; } }
-  // Token aus der Anmeldung übernehmen und sofort aus der Adresse entfernen
-  var m = location.hash.match(/[#&]t=([^&]+)/);
-  if (m) {
-    try { localStorage.setItem(KEY, decodeURIComponent(m[1])); } catch (e) {}
-    history.replaceState(null, '', location.pathname);
+  function merken(k, v) { try { if (v == null) localStorage.removeItem(k); else localStorage.setItem(k, v); } catch (e) {} }
+
+  // Rückkehr von der Anmeldung: Token (Weg über A) oder Google-Ausweis (direkter Weg) aus der Adresse holen
+  var h = new URLSearchParams(location.hash.replace(/^#/, ''));
+  var idToken = h.get('id_token'), fehlerGoogle = h.get('error');
+  if (h.get('t')) merken(KEY, h.get('t'));
+  if (h.get('t') || idToken || fehlerGoogle) history.replaceState(null, '', location.pathname);
+
+  function zufall() {
+    var a = new Uint8Array(16); crypto.getRandomValues(a);
+    return Array.prototype.map.call(a, function (x) { return ('0' + x.toString(16)).slice(-2); }).join('');
+  }
+  function loginUrl() {
+    if (!CLIENT_ID) return LOGIN_A;
+    var nonce = zufall(); merken('acc_nonce', nonce);
+    return 'https://accounts.google.com/o/oauth2/v2/auth?' + new URLSearchParams({
+      client_id: CLIENT_ID, redirect_uri: SEITE, response_type: 'id_token', scope: 'openid email',
+      nonce: nonce, hd: 'atlasoperations.de'
+    }).toString();
+  }
+  function nonceAusToken(t) {
+    try { return JSON.parse(atob(t.split('.')[1].replace(/-/g, '+').replace(/_/g, '/'))).nonce || ''; } catch (e) { return ''; }
   }
   function holen(url) {
     return fetch(url, { credentials: 'omit', referrerPolicy: 'no-referrer' }).then(function (r) { return r.json(); });
   }
+  function ladeIndex(ok, fehler) {
+    holen(API + '?aktion=index&t=' + encodeURIComponent(token())).then(function (d) {
+      if (d && d.ok === false) {
+        if (d.fehler === 'anmelden') { merken(KEY, null); return fehler({ anmelden: true }); }
+        return fehler({ message: d.fehler });
+      }
+      ok(d);
+    }).catch(function (e) { fehler({ message: 'Keine Verbindung (' + e.message + ')' }); });
+  }
   return {
-    login: LOGIN,
+    get login() { return loginUrl(); },
     index: function (ok, fehler) {
-      if (!API || !LOGIN) return fehler({ message: 'Die Seite wird gerade eingerichtet.' });
+      if (!API) return fehler({ message: 'Die Seite wird gerade eingerichtet.' });
+      if (fehlerGoogle) return fehler({ anmelden: true, meldung: 'Anmeldung abgebrochen. Bitte nochmal versuchen.' });
+      if (idToken) {
+        var erwartet = (function () { try { return localStorage.getItem('acc_nonce') || ''; } catch (e) { return ''; } })();
+        merken('acc_nonce', null);
+        if (!erwartet || nonceAusToken(idToken) !== erwartet) return fehler({ anmelden: true, meldung: 'Anmeldung abgelaufen. Bitte nochmal versuchen.' });
+        holen(API + '?aktion=tausch&id_token=' + encodeURIComponent(idToken)).then(function (d) {
+          if (!d || !d.ok) {
+            var m = d && d.fehler === 'kein ATLAS-Konto' ? 'Nur mit einer @atlasoperations.de-Adresse möglich' + (d.mail ? ' (angemeldet war ' + d.mail + ').' : '.')
+                                                         : 'Anmeldung fehlgeschlagen' + (d && d.fehler ? ': ' + d.fehler : '.');
+            return fehler({ anmelden: true, meldung: m });
+          }
+          merken(KEY, d.token);
+          ladeIndex(ok, fehler);
+        }).catch(function (e) { fehler({ anmelden: true, meldung: 'Keine Verbindung (' + e.message + ')' }); });
+        return;
+      }
       if (!token()) return fehler({ anmelden: true });
-      holen(API + '?aktion=index&t=' + encodeURIComponent(token())).then(function (d) {
-        if (d && d.ok === false) {
-          if (d.fehler === 'anmelden') { try { localStorage.removeItem(KEY); } catch (e) {} return fehler({ anmelden: true }); }
-          return fehler({ message: d.fehler });
-        }
-        ok(d);
-      }).catch(function (e) { fehler({ message: 'Keine Verbindung (' + e.message + ')' }); });
+      ladeIndex(ok, fehler);
     },
     close: function (q, ok, fehler) {
       holen(API + '?aktion=close&q=' + encodeURIComponent(q) + '&t=' + encodeURIComponent(token())).then(ok).catch(fehler);
@@ -672,7 +709,7 @@ DATENQUELLE.index(function (daten) {
     main.innerHTML = '<div class="login">' + (logo ? logo.outerHTML.replace(/linear-gradient/g, 'lg-login') : '') +
       '<h1>Amazon Connect Conference</h1><p>Nur für ATLAS-Konten. Einmal anmelden, danach bleibt dieses Gerät 90&nbsp;Tage angemeldet.</p>' +
       '<a class="cta" href="' + esc(DATENQUELLE.login) + '" target="_self">Mit ATLAS-Konto anmelden</a>' +
-      '<div class="login-fuss">Anmeldung über Google mit @atlasoperations.de</div></div>';
+      '<div class="login-fuss' + (err.meldung ? ' hinweis-login' : '') + '">' + esc(err.meldung || 'Anmeldung über Google mit @atlasoperations.de') + '</div></div>';
     return;
   }
   main.innerHTML = '<div class="leer"><h3>Daten konnten nicht geladen werden</h3><div class="klein">' + esc(err && err.message) + '</div></div>';
