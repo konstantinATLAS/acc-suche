@@ -167,9 +167,11 @@
   /* iOS 26 färbt den Bereich unter der Uhrzeit nach der Hintergrundfarbe der Seite.
      Deshalb ist die Seite selbst Navy, hell ist nur die Fläche hinter den Karten (.flaeche). */
   html, body { background: #020716; overscroll-behavior-y: none; }
-  body { display: flex; flex-direction: column; min-height: 100vh; min-height: 100dvh; }
+  /* Mit dunkler Statusleiste (black-translucent) rechnet iOS 100vh um die Statusleisten-Höhe zu klein.
+     Ohne Ausgleich bleibt unten ein Navy-Balken in genau dieser Höhe (am iPhone gesehen 01.10.2026). */
+  body { display: flex; flex-direction: column; min-height: calc(100vh + env(safe-area-inset-top, 0px)); }
   .flaeche { flex: 1 0 auto; }
-  header { padding-top: calc(env(safe-area-inset-top, 0px) + 24px); }
+  header { padding-top: calc(env(safe-area-inset-top, 0px) + 34px); }
   /* Oben beginnt der Verlauf in exakt der Seitenfarbe -> kein Übergang zur Statusleiste sichtbar */
   header {
     background: linear-gradient(180deg, #020716 0, rgba(2, 7, 22, 0) calc(env(safe-area-inset-top, 0px) + 56px)),
@@ -178,11 +180,6 @@
   .ohne-login .flaeche { background: radial-gradient(130% 62% at 50% 46%, #134487 0%, #0B2E5C 42%, #020716 100%); }
   header { padding-left: calc(16px + env(safe-area-inset-left, 0px)); padding-right: calc(16px + env(safe-area-inset-right, 0px)); }
   main { padding-bottom: calc(48px + env(safe-area-inset-bottom, 0px)); }
-  /* iOS 26 färbt auch den unteren Rand (Home-Balken) nach der Seitenfarbe. Ein fest stehender heller Streifen
-     unten hält diesen Bereich in der Farbe der Kartenfläche; auf der dunklen Anmeldemaske entfällt er. */
-  body::after { content: ''; position: fixed; left: 0; right: 0; bottom: 0; z-index: 4; pointer-events: none;
-    height: max(env(safe-area-inset-bottom, 0px), 1px); background: #F6F8FB; }
-  .ohne-login body::after { display: none; }
 </style>
 </head>
 <body>
