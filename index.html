@@ -178,6 +178,11 @@
   .ohne-login .flaeche { background: radial-gradient(130% 62% at 50% 46%, #134487 0%, #0B2E5C 42%, #020716 100%); }
   header { padding-left: calc(16px + env(safe-area-inset-left, 0px)); padding-right: calc(16px + env(safe-area-inset-right, 0px)); }
   main { padding-bottom: calc(48px + env(safe-area-inset-bottom, 0px)); }
+  /* iOS 26 färbt auch den unteren Rand (Home-Balken) nach der Seitenfarbe. Ein fest stehender heller Streifen
+     unten hält diesen Bereich in der Farbe der Kartenfläche; auf der dunklen Anmeldemaske entfällt er. */
+  body::after { content: ''; position: fixed; left: 0; right: 0; bottom: 0; z-index: 4; pointer-events: none;
+    height: max(env(safe-area-inset-bottom, 0px), 1px); background: #F6F8FB; }
+  .ohne-login body::after { display: none; }
 </style>
 </head>
 <body>
