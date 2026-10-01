@@ -118,7 +118,10 @@
     padding-top: env(safe-area-inset-top, 0px); padding-bottom: env(safe-area-inset-bottom, 0px); }
   .login { width: 100%; max-width: 360px; text-align: center; color: #fff; padding-bottom: 8vh; }
   .login svg { display: block; height: 30px; width: auto; margin: 0 auto 30px; }
-  .login h1 { margin: 0 0 10px; font-size: 27px; font-weight: 600; letter-spacing: -.02em; }
+  /* Titel immer einzeilig: darf die volle Bildschirmbreite nutzen, bleibt auf normalen iPhones bei 27px
+     und wird nur auf sehr schmalen Geräten kleiner */
+  .login h1 { margin: 0 0 10px calc(50% - 50vw); width: 100vw; white-space: nowrap;
+    font-size: min(27px, calc(7.2vw - 1.2px)); font-weight: 600; letter-spacing: -.02em; }
   .login p { margin: 0 0 30px; color: rgba(255, 255, 255, .76); font-size: 15px; line-height: 1.5; }
   /* CTA laut atlas-design-library: Orange nur im Button, Verlauf 180deg, Pille */
   .cta { display: block; padding: 15px 22px; border-radius: 999px; font-weight: 600; font-size: 16px; color: #fff;
@@ -167,9 +170,11 @@
   .flaeche { flex: 1 0 auto; }
   header { padding-top: calc(env(safe-area-inset-top, 0px) + 24px); }
   /* Oben beginnt der Verlauf in exakt der Seitenfarbe -> kein Übergang zur Statusleiste sichtbar */
-  header, .ohne-login .flaeche {
+  header {
     background: linear-gradient(180deg, #020716 0, rgba(2, 7, 22, 0) calc(env(safe-area-inset-top, 0px) + 56px)),
                 linear-gradient(35deg, #020716, #0B2E5C 60%, #134487); }
+  /* Anmeldemaske: hell nur hinter dem Inhalt, zu allen Rändern hin Navy (kein Streifen unter der Statusleiste) */
+  .ohne-login .flaeche { background: radial-gradient(130% 62% at 50% 46%, #134487 0%, #0B2E5C 42%, #020716 100%); }
   header { padding-left: calc(16px + env(safe-area-inset-left, 0px)); padding-right: calc(16px + env(safe-area-inset-right, 0px)); }
   main { padding-bottom: calc(48px + env(safe-area-inset-bottom, 0px)); }
 </style>
