@@ -111,6 +111,20 @@
   .leer { background: var(--paper); border-radius: var(--r); padding: 16px; box-shadow: 0 0 0 1px var(--line); }
   .leer h3 { margin: 0 0 4px; font-size: 16px; }
   .leer .knoepfe .knopf { flex: 1 1 40%; font-size: 13.5px; }
+  .flaeche { background: var(--paper-cool); }
+  .ohne-login header { display: none; }
+  .ohne-login .flaeche { background: var(--navy); }
+  .ohne-login main { min-height: 100vh; min-height: 100dvh; display: flex; align-items: center; justify-content: center;
+    padding-top: env(safe-area-inset-top, 0px); padding-bottom: env(safe-area-inset-bottom, 0px); }
+  .login { width: 100%; max-width: 360px; text-align: center; color: #fff; padding-bottom: 8vh; }
+  .login svg { display: block; height: 30px; width: auto; margin: 0 auto 30px; }
+  .login h1 { margin: 0 0 10px; font-size: 27px; font-weight: 600; letter-spacing: -.02em; }
+  .login p { margin: 0 0 30px; color: rgba(255, 255, 255, .76); font-size: 15px; line-height: 1.5; }
+  /* CTA laut atlas-design-library: Orange nur im Button, Verlauf 180deg, Pille */
+  .cta { display: block; padding: 15px 22px; border-radius: 999px; font-weight: 600; font-size: 16px; color: #fff;
+    background: linear-gradient(180deg, #FFB24E, #F2842A);
+    box-shadow: 0 10px 28px rgba(242, 132, 42, .32), inset 0 1px 0 rgba(255, 255, 255, .35); }
+  .login-fuss { margin-top: 14px; font-size: 12.5px; color: rgba(255, 255, 255, .5); }
   .alternativ { margin: 14px 0 10px; background: var(--paper); border-radius: var(--r); padding: 13px 14px;
     box-shadow: 0 0 0 1px var(--line); }
   .alternativ .alt-titel { font-weight: 600; font-size: 15px; margin-bottom: 2px; }
@@ -140,12 +154,22 @@
 <link rel="apple-touch-icon" href="apple-touch-icon.png">
 <link rel="icon" type="image/png" href="icon-192.png">
 <link rel="manifest" href="manifest.webmanifest">
+<script>
+  // Ohne Anmeldung gar nicht erst die Suchleiste zeigen (kein Aufblitzen vor der Anmeldemaske)
+  try { if (!localStorage.getItem('acc_token') && !/[#&]t=/.test(location.hash)) document.documentElement.classList.add('ohne-login'); }
+  catch (e) { document.documentElement.classList.add('ohne-login'); }
+</script>
 <style>
-  /* Eigene Seite: Navy läuft unter die Statusleiste, Logo sitzt direkt darunter */
-  html { background: #020716; }
-  html, body { overscroll-behavior-y: none; }
-  body { min-height: 100vh; }
-  header { padding-top: calc(env(safe-area-inset-top, 0px) + 10px); }
+  /* iOS 26 färbt den Bereich unter der Uhrzeit nach der Hintergrundfarbe der Seite.
+     Deshalb ist die Seite selbst Navy, hell ist nur die Fläche hinter den Karten (.flaeche). */
+  html, body { background: #020716; overscroll-behavior-y: none; }
+  body { display: flex; flex-direction: column; min-height: 100vh; min-height: 100dvh; }
+  .flaeche { flex: 1 0 auto; }
+  header { padding-top: calc(env(safe-area-inset-top, 0px) + 24px); }
+  /* Oben beginnt der Verlauf in exakt der Seitenfarbe -> kein Übergang zur Statusleiste sichtbar */
+  header, .ohne-login .flaeche {
+    background: linear-gradient(180deg, #020716 0, rgba(2, 7, 22, 0) calc(env(safe-area-inset-top, 0px) + 56px)),
+                linear-gradient(35deg, #020716, #0B2E5C 60%, #134487); }
   header { padding-left: calc(16px + env(safe-area-inset-left, 0px)); padding-right: calc(16px + env(safe-area-inset-right, 0px)); }
   main { padding-bottom: calc(48px + env(safe-area-inset-bottom, 0px)); }
 </style>
@@ -183,7 +207,7 @@
   </div>
 </header>
 
-<main id="main"><div class="laden">Lade Daten …</div></main>
+<div class="flaeche"><main id="main"><div class="laden">Lade Daten …</div></main></div>
 
 <script>
 var DATENQUELLE = (function () {
@@ -638,9 +662,12 @@ DATENQUELLE.index(function (daten) {
 }, function (err) {
   var main = document.getElementById('main');
   if (err && err.anmelden) {
-    main.innerHTML = '<div class="leer"><h3>Einmal anmelden</h3><div class="klein">Die Suche ist nur mit einem ATLAS-Google-Konto nutzbar. ' +
-      'Danach bleibt dieses Gerät 90 Tage angemeldet.</div><div class="knoepfe"><a class="knopf" href="' + esc(DATENQUELLE.login) +
-      '" target="_self">Mit ATLAS-Konto anmelden</a></div></div>';
+    document.documentElement.classList.add('ohne-login');
+    var logo = document.querySelector('.kopfzeile svg');
+    main.innerHTML = '<div class="login">' + (logo ? logo.outerHTML.replace(/linear-gradient/g, 'lg-login') : '') +
+      '<h1>ACC Berlin Suche</h1><p>Nur für ATLAS-Konten. Einmal anmelden, danach bleibt dieses Gerät 90&nbsp;Tage angemeldet.</p>' +
+      '<a class="cta" href="' + esc(DATENQUELLE.login) + '" target="_self">Mit ATLAS-Konto anmelden</a>' +
+      '<div class="login-fuss">Anmeldung über Google mit @atlasoperations.de</div></div>';
     return;
   }
   main.innerHTML = '<div class="leer"><h3>Daten konnten nicht geladen werden</h3><div class="klein">' + esc(err && err.message) + '</div></div>';
