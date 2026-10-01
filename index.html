@@ -1,0 +1,650 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<base target="_top">
+<meta charset="utf-8">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  /* Tokens aus atlas-design-library/tokens/colors.json (CI v3) */
+  :root {
+    --ink: #030924; --ink-soft: #193154; --paper: #FFFFFF; --paper-cool: #F6F8FB; --line: #E4E9F0;
+    --blue: #0C63A6; --select: #1780C7;
+    --navy: linear-gradient(35deg, #020716, #0B2E5C 60%, #134487);
+    --tint-blue: #E8F1FA; --tint-green: #E5F5EC; --ink-green: #11743A;
+    --neg-face: #FBEAE1; --neg-mark: #C2504A; --neg-ink: #8E3A35;
+    --r: 14px;
+  }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; background: var(--paper-cool); color: var(--ink);
+    font-family: Inter, -apple-system, system-ui, sans-serif; font-size: 15px; line-height: 1.45;
+    -webkit-font-smoothing: antialiased; -webkit-text-size-adjust: 100%; }
+  a { color: var(--blue); text-decoration: none; }
+
+  /* Kopf */
+  header { position: sticky; top: 0; z-index: 5; background: var(--navy);
+    padding: calc(14px + var(--oben, 0px)) 16px 12px; box-shadow: 0 6px 24px rgba(3, 9, 36, .18); }
+  /* iPhone: Safari legt oben eine unscharfe Kante über die Seite, als Home-Bildschirm-App die Statusleiste */
+  @media (hover: none) and (pointer: coarse) { :root { --oben: 22px; } }
+  html.app { --oben: 44px; }
+  .kopfzeile { display: flex; align-items: center; justify-content: space-between; margin-bottom: 12px; }
+  .kopfzeile svg { height: 17px; width: auto; display: block; }
+  .stand { color: rgba(255, 255, 255, .62); font-size: 12px; letter-spacing: .02em; }
+  .suche { position: relative; }
+  .suche input { width: 100%; height: 50px; border: 0; border-radius: var(--r); padding: 0 46px 0 46px;
+    font: 500 17px Inter, sans-serif; color: var(--ink); background: var(--paper); outline: none;
+    -webkit-appearance: none; box-shadow: inset 0 0 0 1px rgba(255, 255, 255, .4); }
+  .suche input:focus { box-shadow: inset 0 0 0 2px var(--select); }
+  .suche input::-webkit-search-cancel-button { -webkit-appearance: none; }
+  .suche input::placeholder { color: #8391A7; font-weight: 400; }
+  .lupe { position: absolute; left: 15px; top: 15px; width: 20px; height: 20px; color: var(--ink-soft); }
+  .leeren { position: absolute; right: 6px; top: 6px; width: 38px; height: 38px; border: 0; border-radius: 10px;
+    background: var(--paper-cool); color: var(--ink-soft); font-size: 20px; line-height: 38px; display: none; }
+  .filter { display: flex; gap: 6px; margin-top: 10px; overflow-x: auto; scrollbar-width: none; }
+  .filter::-webkit-scrollbar { display: none; }
+  .chip { flex: none; border: 0; border-radius: 999px; padding: 7px 12px; font: 500 13px Inter, sans-serif;
+    color: rgba(255, 255, 255, .86); background: rgba(255, 255, 255, .1);
+    box-shadow: inset 0 0 0 1px rgba(255, 255, 255, .14); }
+  .chip.an { background: var(--select); color: #fff; box-shadow: none; }
+  .trenner { flex: none; width: 1px; background: rgba(255, 255, 255, .18); margin: 4px 2px; }
+
+  /* Liste */
+  main { padding: 12px 16px 48px; max-width: 760px; margin: 0 auto; }
+  .meta { color: var(--ink-soft); font-size: 13px; margin: 4px 2px 10px; }
+  .karte { background: var(--paper); border-radius: var(--r); margin-bottom: 10px;
+    box-shadow: 0 1px 0 var(--line), 0 0 0 1px var(--line); overflow: hidden; }
+  .karte-kopf { display: block; width: 100%; text-align: left; border: 0; background: none; padding: 13px 14px;
+    font: inherit; color: inherit; cursor: pointer; }
+  .zeile1 { display: flex; align-items: baseline; justify-content: space-between; gap: 12px; }
+  .firma { font-weight: 600; font-size: 16px; letter-spacing: -.01em; }
+  .groesse { flex: none; font-weight: 600; font-size: 14px; color: var(--blue); white-space: nowrap; }
+  .groesse.klasse { color: var(--ink-soft); font-weight: 500; }
+  .zeile2 { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; margin-top: 7px; }
+  .klein { color: var(--ink-soft); font-size: 13px; }
+  .badge { display: inline-block; border-radius: 999px; padding: 2px 9px; font-size: 12px; font-weight: 500;
+    background: var(--paper-cool); color: var(--ink-soft); box-shadow: inset 0 0 0 1px var(--line); }
+  .badge.gruen { background: var(--tint-green); color: var(--ink-green); box-shadow: none; }
+  .badge.blau { background: var(--tint-blue); color: var(--blue); box-shadow: none; }
+  .badge.stark { background: var(--select); color: #fff; box-shadow: none; }
+  .badge.peach { background: var(--neg-face); color: var(--neg-ink); box-shadow: none; }
+
+  .abschnitt { margin: 18px 2px 8px; font-size: 12px; font-weight: 600; letter-spacing: .06em;
+    text-transform: uppercase; color: var(--ink-soft); }
+  .abschnitt.bester { margin-top: 2px; color: var(--select); }
+  .karte.top { box-shadow: 0 0 0 2px var(--select), 0 8px 24px rgba(23, 128, 199, .16); }
+  .karte.top .karte-kopf { background: linear-gradient(180deg, var(--tint-blue), var(--paper) 85%); }
+  .karte.top .firma { font-size: 17.5px; }
+  .kpis { display: flex; flex-wrap: wrap; gap: 4px 14px; margin-top: 3px; font-size: 13px; color: var(--ink-soft); }
+  .kpis b { font-weight: 600; color: var(--ink); }
+  .grund { margin-top: 7px; font-size: 13px; color: var(--ink-soft); overflow-wrap: anywhere; }
+  .grund b { font-weight: 500; color: var(--ink); }
+  mark { background: #D3E6F7; color: inherit; border-radius: 3px; padding: 0 1px; }
+  .detail { display: none; padding: 0 14px 14px; border-top: 1px solid var(--line); }
+  .karte.offen .detail { display: block; }
+  .hinweis { margin-top: 12px; background: var(--neg-face); color: var(--neg-ink); border-radius: 10px;
+    padding: 9px 11px; font-size: 13.5px; font-weight: 500; }
+  .zahlen { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-top: 12px; }
+  .zahl { background: var(--paper-cool); border-radius: 10px; padding: 9px 11px; }
+  .zahl b { display: block; font-size: 17px; font-weight: 600; letter-spacing: -.01em; }
+  .zahl span { font-size: 12px; color: var(--ink-soft); }
+  .block { margin-top: 14px; }
+  .block h4 { margin: 0 0 6px; font-size: 12px; font-weight: 600; letter-spacing: .06em; text-transform: uppercase;
+    color: var(--ink-soft); }
+  .person { display: flex; align-items: center; justify-content: space-between; gap: 10px; padding: 7px 0;
+    border-bottom: 1px solid var(--line); }
+  .person:last-child { border-bottom: 0; }
+  .person .wer { min-width: 0; }
+  .person .wer div { overflow-wrap: anywhere; }
+  .person .mail { font-size: 12.5px; color: var(--ink-soft); }
+  .mini { flex: none; font-size: 12.5px; font-weight: 600; padding: 6px 10px; border-radius: 9px;
+    background: var(--tint-blue); color: var(--blue); }
+  .liste-kv { display: grid; grid-template-columns: 112px 1fr; gap: 4px 10px; font-size: 14px; }
+  .liste-kv dt { color: var(--ink-soft); }
+  .liste-kv dd { margin: 0; overflow-wrap: anywhere; }
+  .knoepfe { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 14px; }
+  .knopf { display: flex; align-items: center; justify-content: center; flex: 1 1 30%; min-width: 96px; text-align: center; padding: 11px 10px; border-radius: 11px;
+    font-weight: 600; font-size: 14px; background: var(--ink); color: #fff; }
+  .knopf.hell { background: var(--tint-blue); color: var(--blue); }
+  .fuss { margin-top: 12px; font-size: 11.5px; color: #8391A7; }
+
+  .leer { background: var(--paper); border-radius: var(--r); padding: 16px; box-shadow: 0 0 0 1px var(--line); }
+  .leer h3 { margin: 0 0 4px; font-size: 16px; }
+  .leer .knoepfe .knopf { flex: 1 1 40%; font-size: 13.5px; }
+  .alternativ { margin: 14px 0 10px; background: var(--paper); border-radius: var(--r); padding: 13px 14px;
+    box-shadow: 0 0 0 1px var(--line); }
+  .alternativ .alt-titel { font-weight: 600; font-size: 15px; margin-bottom: 2px; }
+  .alternativ .knoepfe { margin-top: 10px; }
+  .alternativ .knopf { flex: 1 1 40%; padding: 10px 8px; font-size: 13.5px; }
+  .mini.hell { background: var(--paper-cool); color: var(--ink-soft); box-shadow: inset 0 0 0 1px var(--line); }
+  .live { margin-top: 18px; }
+  .live h4 { margin: 0 2px 8px; font-size: 12px; font-weight: 600; letter-spacing: .06em; text-transform: uppercase;
+    color: var(--ink-soft); }
+  .live-zeile { display: flex; align-items: center; justify-content: space-between; gap: 10px;
+    background: var(--paper); border-radius: 12px; padding: 11px 12px; margin-bottom: 8px; box-shadow: 0 0 0 1px var(--line); }
+  .ok { color: var(--blue); font-size: 13px; margin: 14px 2px 0; }
+  .laden { text-align: center; color: var(--ink-soft); padding: 40px 0; }
+  .tipp { color: var(--ink-soft); font-size: 14px; margin: 6px 2px; }
+  .tipp b { color: var(--ink); font-weight: 600; }
+  @media (min-width: 700px) { .zahlen { grid-template-columns: repeat(4, 1fr); } }
+</style>
+<title>ACC Berlin Suche</title>
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, viewport-fit=cover">
+<meta name="robots" content="noindex, nofollow">
+<meta name="referrer" content="no-referrer">
+<meta name="theme-color" content="#020716">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="ACC Suche">
+<link rel="apple-touch-icon" href="apple-touch-icon.png">
+<link rel="icon" type="image/png" href="icon-192.png">
+<link rel="manifest" href="manifest.webmanifest">
+<style>
+  /* Eigene Seite: Navy läuft unter die Statusleiste, Logo sitzt direkt darunter */
+  html { background: #020716; }
+  html, body { overscroll-behavior-y: none; }
+  body { min-height: 100vh; }
+  header { padding-top: calc(env(safe-area-inset-top, 0px) + 10px); }
+  header { padding-left: calc(16px + env(safe-area-inset-left, 0px)); padding-right: calc(16px + env(safe-area-inset-right, 0px)); }
+  main { padding-bottom: calc(48px + env(safe-area-inset-bottom, 0px)); }
+</style>
+</head>
+<body>
+<header>
+  <div class="kopfzeile">
+    <svg aria-label="ATLAS Operations" role="img" id="Layer_1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" version="1.1" viewBox="0 0 681.67 160.4">
+  <defs>
+    <linearGradient id="linear-gradient" x1="154.97" y1="39.95" x2="64.48" y2="196.68" gradientUnits="userSpaceOnUse">
+      <stop offset=".18" stop-color="#0bace4"/>
+      <stop offset="1" stop-color="#1060ad"/>
+    </linearGradient>
+  </defs>
+  <path fill="#fff" d="M676.55,2.95c-3.34-.93-7.04-1.65-11.1-2.16-4.22-.53-8.68-.79-13.39-.79-13.57,0-23.72,2.37-30.46,7.12-6.74,4.75-10.11,11.36-10.11,19.83,0,6.84,2.21,12.37,6.65,16.59,4.43,4.22,11.64,7.26,21.64,9.14l6.99,1.34c6.3,1.18,10.68,2.66,13.14,4.43s3.69,4.37,3.69,7.79c0,4.03-1.61,7.15-4.82,9.35s-8.66,3.3-16.35,3.3c-2.82,0-5.9-.16-9.26-.49-3.36-.33-6.74-.82-10.14-1.47-2.24-.43-4.36-.96-6.43-1.53l-2.61,13.42c4.13,1.23,8.51,2.19,13.16,2.87,4.85.71,9.88,1.07,15.09,1.07,8.23,0,15.29-1.09,21.17-3.27s10.39-5.31,13.54-9.38c3.15-4.07,4.72-8.98,4.72-14.73,0-4.48-.99-8.4-2.96-11.76-1.97-3.36-5.18-6.2-9.61-8.52s-10.3-4.18-17.61-5.56l-6.99-1.28c-5.67-1.1-9.58-2.55-11.72-4.34-2.14-1.79-3.21-4.34-3.21-7.64,0-2.57.76-4.78,2.27-6.63s3.95-3.28,7.31-4.28,7.79-1.5,13.29-1.5c4.32,0,8.62.29,12.88.86,3.08.41,5.95.96,8.62,1.62l2.6-13.4h.01ZM573.94,91.6h18.14L556.18,1.16h-26.08l-35.91,90.44h17.89l9.97-25.79h41.95l9.95,25.79h0ZM558.79,52.31h-31.52l15.78-40.82h0s15.74,40.82,15.74,40.82h0ZM470.45,91.6l5.59-14.09v-.03h-50.08V1.16h-18.33v90.44s62.82,0,62.82,0ZM346.9,15.28h33.64V1.16h-85.62v14.12h33.64v76.33h18.33V15.28h0ZM270.86,91.6h18.14L253.09,1.16h-26.08l-35.91,90.44h17.89l9.97-25.79h41.95l9.95,25.79h0ZM255.7,52.31h-31.52l15.78-40.82h0s15.75,40.82,15.75,40.82h0Z"/>
+  <path fill="#fff" d="M637.98,136.31c-.88-.73-1.32-1.77-1.32-3.12,0-1.05.31-1.95.93-2.71.62-.76,1.62-1.34,2.99-1.75s3.19-.61,5.44-.61c1.77,0,3.53.12,5.27.35,1.26.17,2.43.39,3.53.66l1.06-5.48c-1.37-.38-2.88-.67-4.54-.88-1.73-.22-3.55-.32-5.48-.32-5.55,0-9.7.97-12.46,2.91s-4.14,4.65-4.14,8.11c0,2.8.91,5.06,2.72,6.79s4.76,2.97,8.85,3.74l2.86.55c2.58.48,4.37,1.09,5.37,1.81,1.01.72,1.51,1.79,1.51,3.19,0,1.65-.66,2.92-1.97,3.82-1.31.9-3.54,1.35-6.69,1.35-1.15,0-2.41-.07-3.79-.2-1.38-.13-2.76-.33-4.15-.6-.92-.18-1.79-.39-2.63-.62l-1.07,5.49c1.69.5,3.48.89,5.38,1.17,1.98.29,4.04.44,6.17.44,3.37,0,6.25-.45,8.66-1.34s4.25-2.17,5.54-3.84,1.93-3.67,1.93-6.02c0-1.83-.4-3.44-1.21-4.81-.81-1.38-2.12-2.54-3.93-3.49-1.81-.95-4.21-1.71-7.2-2.27l-2.86-.52c-2.32-.45-3.92-1.04-4.79-1.78h0l.02-.02ZM606.81,159.91h7.33v-37h-6.85v27.06h-.01l-20.21-27.06h-7.33v37h6.85v-27.07h0l20.22,27.07h0ZM560.67,151.83c1.58-2.82,2.36-6.29,2.36-10.42s-.78-7.61-2.35-10.42c-1.57-2.82-3.78-4.95-6.65-6.39s-6.24-2.16-10.12-2.16-7.21.72-10.07,2.15c-2.87,1.43-5.09,3.56-6.66,6.38-1.58,2.82-2.36,6.3-2.36,10.45s.79,7.63,2.36,10.45c1.57,2.82,3.79,4.94,6.65,6.38,2.86,1.43,6.22,2.15,10.09,2.15s7.21-.72,10.09-2.16,5.1-3.57,6.67-6.39h0v-.02ZM555.61,141.56c0,3-.47,5.46-1.41,7.39-.94,1.92-2.29,3.35-4.04,4.26-1.75.92-3.83,1.38-6.25,1.38s-4.47-.46-6.22-1.38-3.1-2.36-4.05-4.32c-.95-1.97-1.43-4.51-1.43-7.62s.48-5.49,1.44-7.41c.96-1.93,2.32-3.34,4.07-4.25,1.76-.91,3.82-1.36,6.19-1.36s4.45.47,6.2,1.4,3.1,2.38,4.06,4.35,1.44,4.49,1.44,7.57h0ZM500.83,159.91h7.28v-37h-7.28v37h0ZM472.98,128.68h13.35v-5.77h-33.97v5.77h13.35v31.23h7.27v-31.23h0ZM439.06,159.91h7.2l-14.25-37h-10.35l-14.25,37h7.1l3.96-10.55h16.65l3.95,10.55h-.01ZM433.05,143.83h-12.51l6.26-16.69h0l6.24,16.69h.01ZM386.57,144.81v-.02c.34-.1.7-.18,1.02-.3,2.5-.88,4.4-2.18,5.71-3.92s1.96-3.9,1.96-6.49c0-4.08-1.4-7.04-4.2-8.86-2.8-1.83-6.98-2.74-12.55-2.74-1.45,0-2.91.06-4.38.19-1.47.12-2.87.29-4.23.5-1.35.21-2.6.44-3.75.69v36.05h7.12v-14.3c.9.05,1.76.1,2.59.14.82.04,1.69.06,2.61.06.28,0,.54-.02.81-.03l4.21,5.4h0l6.8,8.73h8.13l-11.87-15.09h.02ZM386.16,139.02c-1.55,1.04-4.01,1.56-7.37,1.56-.72,0-1.37,0-1.95-.02-.58-.02-1.16-.05-1.74-.1-.57-.05-1.18-.11-1.81-.17v-12.1c.87-.17,1.77-.3,2.7-.4.93-.1,1.97-.15,3.12-.15,2.15,0,3.92.21,5.3.64,1.38.42,2.41,1.11,3.07,2.06.67.95,1,2.21,1,3.78,0,2.23-.78,3.87-2.33,4.91h0ZM321.39,159.91h28.4v-5.52h-21.23v-10.65h18.38v-5.53h-18.38v-9.77h20.98v-5.52h-28.15v37h0ZM305.14,135.56c0-4.55-1.46-7.87-4.38-9.95-2.92-2.08-7.24-3.12-12.98-3.12-2.2,0-4.26.1-6.18.29-1.92.19-3.83.47-5.75.84v36.3h7.28v-11.4c.82.08,1.61.14,2.38.17.77.03,1.57.05,2.4.05,5.85,0,10.18-1.12,13-3.36s4.23-5.51,4.23-9.81h0ZM298.06,135.58c0,2.75-.79,4.76-2.36,6.04-1.57,1.27-4.15,1.91-7.74,1.91-.92,0-1.75-.02-2.5-.08-.75-.05-1.53-.12-2.33-.23v-15.12c.8-.15,1.62-.26,2.46-.33s1.78-.1,2.81-.1c3.27,0,5.69.62,7.27,1.88,1.58,1.25,2.38,3.26,2.38,6.02h0ZM256.8,151.83c1.58-2.82,2.36-6.29,2.36-10.42s-.78-7.61-2.35-10.42c-1.57-2.82-3.78-4.95-6.65-6.39s-6.24-2.16-10.13-2.16-7.21.72-10.07,2.15c-2.87,1.43-5.09,3.56-6.66,6.38-1.58,2.82-2.36,6.3-2.36,10.45s.79,7.63,2.36,10.45c1.57,2.82,3.79,4.94,6.65,6.38,2.86,1.43,6.22,2.15,10.09,2.15s7.21-.72,10.09-2.16c2.87-1.44,5.1-3.57,6.67-6.39h0v-.02ZM251.74,141.56c0,3-.47,5.46-1.41,7.39-.94,1.92-2.29,3.35-4.04,4.26-1.75.92-3.83,1.38-6.25,1.38s-4.47-.46-6.22-1.38-3.1-2.36-4.05-4.32c-.95-1.97-1.43-4.51-1.43-7.62s.48-5.49,1.44-7.41c.96-1.93,2.32-3.34,4.07-4.25,1.76-.91,3.82-1.36,6.19-1.36s4.45.47,6.2,1.4,3.1,2.38,4.06,4.35c.96,1.97,1.44,4.49,1.44,7.57h0Z"/>
+  <path fill="url(#linear-gradient)" d="M87.61,1.06l14.44,26.14L28.04,160.04H1.03l-1.03-1.78L87.61,1.06ZM58.01,158.26l1.03,1.78h27l44.88-80.55-14.45-26.16h-25.3l12.82,22.4-45.98,82.53ZM133.38,127.1l-17.35,31.16,1.03,1.78h58.39l-30.09-54.45h-24.28l12.3,21.51Z"/>
+</svg>
+    <div class="stand" id="stand"></div>
+  </div>
+  <div class="suche">
+    <svg class="lupe" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg>
+    <input id="q" type="search" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false"
+           enterkeyhint="search" placeholder="Name, Firma, Marke, E-Mail …">
+    <button class="leeren" id="leeren" aria-label="Suche leeren">×</button>
+  </div>
+  <div class="filter" id="filter">
+    <button class="chip an" data-g="0">Alle Größen</button>
+    <button class="chip" data-g="2500000">ab 2,5 Mio.</button>
+    <button class="chip" data-g="10000000">ab 10 Mio.</button>
+    <button class="chip" data-g="25000000">ab 25 Mio.</button>
+    <span class="trenner"></span>
+    <button class="chip" data-s="kunde">Kunden &amp; Ex-Kunden</button>
+    <button class="chip" data-s="einladung">Einladung beantwortet</button>
+  </div>
+</header>
+
+<main id="main"><div class="laden">Lade Daten …</div></main>
+
+<script>
+var DATENQUELLE = (function () {
+  var API = "", LOGIN = "", KEY = 'acc_token';
+  function token() { try { return localStorage.getItem(KEY) || ''; } catch (e) { return ''; } }
+  // Token aus der Anmeldung übernehmen und sofort aus der Adresse entfernen
+  var m = location.hash.match(/[#&]t=([^&]+)/);
+  if (m) {
+    try { localStorage.setItem(KEY, decodeURIComponent(m[1])); } catch (e) {}
+    history.replaceState(null, '', location.pathname);
+  }
+  function holen(url) {
+    return fetch(url, { credentials: 'omit', referrerPolicy: 'no-referrer' }).then(function (r) { return r.json(); });
+  }
+  return {
+    login: LOGIN,
+    index: function (ok, fehler) {
+      if (!API || !LOGIN) return fehler({ message: 'Die Seite wird gerade eingerichtet.' });
+      if (!token()) return fehler({ anmelden: true });
+      holen(API + '?aktion=index&t=' + encodeURIComponent(token())).then(function (d) {
+        if (d && d.ok === false) {
+          if (d.fehler === 'anmelden') { try { localStorage.removeItem(KEY); } catch (e) {} return fehler({ anmelden: true }); }
+          return fehler({ message: d.fehler });
+        }
+        ok(d);
+      }).catch(function (e) { fehler({ message: 'Keine Verbindung (' + e.message + ')' }); });
+    },
+    close: function (q, ok, fehler) {
+      holen(API + '?aktion=close&q=' + encodeURIComponent(q) + '&t=' + encodeURIComponent(token())).then(ok).catch(fehler);
+    }
+  };
+})();
+try {
+  if (navigator.standalone || window.matchMedia('(display-mode: standalone)').matches) document.documentElement.classList.add('app');
+} catch (err) {}
+var DATEN = [], KOPF = {}, STAND = '';
+var filterGroesse = 0, filterStatus = '';
+var liveNr = 0, liveTimer = null;
+var MAX = 40;
+
+var KLASSE_RANG = { A1: 11, A2: 10, B1: 9, B2: 8, B3: 7, B4: 6, C1: 5, C2: 4, D: 3, E: 2, F: 1 };
+var KLASSE_BODEN = { A1: 25e6, A2: 5e6, B1: 2.5e6 };          // grobe Untergrenze, aus unseren Daten abgeleitet
+var KLASSE_TEXT = { A1: 'größte Klasse, bei uns meist über 25 Mio. €',
+                    A2: 'bei uns meist 5 bis 25 Mio. €', B1: 'bei uns meist 2,5 bis 7,5 Mio. €' };
+
+// ---------------------------------------------------------------- Normalisieren
+function norm(s) {
+  s = String(s == null ? '' : s).toLowerCase()
+    .replace(/ä/g, 'ae').replace(/ö/g, 'oe').replace(/ü/g, 'ue').replace(/ß/g, 'ss');
+  s = s.normalize('NFKD').replace(/[̀-ͯ]/g, '');
+  return s.replace(/[^a-z0-9@.]+/g, ' ').replace(/\s+/g, ' ').trim();
+}
+function normKurz(s) {   // ä -> a (so wie LinkedIn und Mailadressen oft schreiben)
+  s = String(s == null ? '' : s).toLowerCase().normalize('NFKD').replace(/[̀-ͯ]/g, '').replace(/ß/g, 'ss');
+  return s.replace(/[^a-z0-9@.]+/g, ' ').replace(/\s+/g, ' ').trim();
+}
+function ziffern(s) { return String(s || '').replace(/\D/g, '').replace(/^0+/, '').replace(/^49/, ''); }
+function trigramme(s) {
+  var t = {}, x = '  ' + s + ' ';
+  for (var i = 0; i < x.length - 2; i++) t[x.substr(i, 3)] = 1;
+  return t;
+}
+function dice(a, b) {
+  var n = 0, na = 0, nb = 0, k;
+  for (k in a) { na++; if (b[k]) n++; }
+  for (k in b) nb++;
+  return na + nb ? 2 * n / (na + nb) : 0;
+}
+
+// ---------------------------------------------------------------- Daten aufbereiten
+function g(r, k) { var i = KOPF[k]; return i == null ? '' : r[i]; }
+
+function aufbereiten(raw) {
+  raw.kopf.forEach(function (k, i) { KOPF[k] = i; });
+  STAND = raw.stand;
+  DATEN = raw.zeilen.map(function (r) {
+    var primaer = [g(r, 'Firma'), g(r, 'Amazon-Shopname'), g(r, 'Firmenname (Impressum)'),
+                   g(r, 'GF 1'), g(r, 'GF 2'), g(r, 'GF 3'), g(r, 'Weitere Personen')].join(' | ');
+    var rest = [g(r, 'Website'), g(r, 'GF 1 E-Mail'), g(r, 'GF 2 E-Mail'), g(r, 'GF 3 E-Mail'),
+                g(r, 'E-Mail (Impressum)'), g(r, 'GF auch bei'), g(r, 'SID'), g(r, 'Produktgruppe'),
+                g(r, 'Betreut von'), g(r, 'Suchzusatz (E-Mails, Telefon)')].join(' | ');
+    var umsatz = Number(g(r, 'Umsatz 12 Mon. (EUR)')) || 0;
+    var klasse = String(g(r, 'Umsatzklasse') || '');
+    var tel = (String(g(r, 'Telefon (Impressum)')) + ' ' + String(g(r, 'Suchzusatz (E-Mails, Telefon)')))
+      .split(/tel:|[,;]| \+/).map(ziffern).filter(function (x) { return x.length >= 6; });
+    var woerter = Array.from(new Set(norm([g(r, 'Firma'), g(r, 'Amazon-Shopname'), g(r, 'Firmenname (Impressum)'),
+                 g(r, 'GF 1'), g(r, 'GF 2'), g(r, 'GF 3'), g(r, 'Weitere Personen')].join(' '))
+                 .replace(/[.@]/g, ' ').split(' ').filter(function (x) { return x.length >= 3; })));
+    var status = String(g(r, 'Close-Status') || ''), einl = String(g(r, 'Einladung Pre-Event') || '');
+    return {
+      r: r,
+      p: ' ' + norm(primaer) + ' ' + normKurz(primaer) + ' ',
+      a: ' ' + norm(rest) + ' ' + normKurz(rest) + ' ',
+      tel: tel, woerter: woerter, tri: null,
+      umsatz: umsatz,
+      groesse: umsatz || KLASSE_BODEN[klasse] || 0,
+      rang: umsatz || (KLASSE_BODEN[klasse] || 0) + (KLASSE_RANG[klasse] || 0),
+      kunde: /^KUNDE/.test(status) || /^(Kunde Aktiv|Ex-Kunde)$/.test(String(g(r, 'Segment'))),
+      einladung: /^(Interessiert|Kein Interesse|Hat geantwortet)/.test(einl)
+    };
+  });
+}
+
+// ---------------------------------------------------------------- Suchen
+function suche(q) {
+  var tokens = norm(q).split(' ').filter(Boolean);
+  var kurz = normKurz(q).split(' ').filter(Boolean);
+  var dq = ziffern(q);
+  var telSuche = dq.length >= 6 && /^[\d\s+()\/-]+$/.test(q.trim());
+  var treffer = [];
+  for (var i = 0; i < DATEN.length; i++) {
+    var d = DATEN[i];
+    if (!passtFilter(d)) continue;
+    if (!tokens.length) { treffer.push({ d: d, s: 0 }); continue; }
+    var s = 0, ok = true;
+    if (telSuche) {
+      ok = d.tel.some(function (t) { return t.indexOf(dq) >= 0 || dq.indexOf(t) >= 0; });
+      s = 5;
+    } else {
+      for (var j = 0; j < tokens.length && ok; j++) {
+        var t = tokens[j], t2 = kurz[j] || t, w = wertung(d, t);
+        if (!w && t2 !== t) w = wertung(d, t2);
+        if (!w) ok = false; else s += w;
+      }
+    }
+    if (ok) treffer.push({ d: d, s: s });
+  }
+  var aehnlich = false;
+  if (!telSuche && treffer.length < 3 && tokens.some(function (t) { return t.length >= 4; })) {
+    // Tippfehler: jedes Suchwort muss exakt ODER sehr ähnlich (Trigramme) in einem Namen vorkommen
+    var qt = tokens.map(function (t) { return t.length >= 4 ? trigramme(t.replace(/[.@]/g, '')) : null; });
+    var schon = new Set(treffer.map(function (x) { return x.d; }));
+    for (var k = 0; k < DATEN.length; k++) {
+      var e = DATEN[k];
+      if (schon.has(e) || !passtFilter(e)) continue;
+      var summe = 0, alle = true;
+      for (var m = 0; m < tokens.length && alle; m++) {
+        var w = wertung(e, tokens[m]);
+        if (w) { summe += w; continue; }
+        if (!qt[m]) { alle = false; break; }
+        if (!e.tri) e.tri = e.woerter.map(trigramme);
+        var best = 0;
+        for (var n = 0; n < e.tri.length; n++) best = Math.max(best, dice(qt[m], e.tri[n]));
+        if (best >= 0.6) summe += best; else alle = false;
+      }
+      if (alle) { treffer.push({ d: e, s: summe, f: 1 }); aehnlich = true; }
+    }
+  }
+  treffer.sort(function (a, b) { return (b.f ? 0 : 1) - (a.f ? 0 : 1) || b.s - a.s || b.d.rang - a.d.rang; });
+  return { liste: treffer, aehnlich: aehnlich, tokens: tokens.length, tok: tokens, kurz: kurz, tel: telSuche, dq: dq };
+}
+function wertung(d, t) {
+  if (d.p.indexOf(' ' + t + ' ') >= 0) return 6;      // ganzes Wort im Namen
+  if (d.p.indexOf(' ' + t) >= 0) return 4;            // Wortanfang im Namen
+  if (d.p.indexOf(t) >= 0) return 3;                  // irgendwo im Namen
+  if (d.a.indexOf(t) >= 0) return 1;                  // E-Mail, Domain, SID, …
+  return 0;
+}
+function passtFilter(d) {
+  if (filterGroesse && d.groesse < filterGroesse) return false;
+  if (filterStatus === 'kunde' && !d.kunde) return false;
+  if (filterStatus === 'einladung' && !d.einladung) return false;
+  return true;
+}
+
+// ---------------------------------------------------------------- Warum ist das ein Treffer?
+var FELDER = [   // Reihenfolge = Vorrang, wenn ein Suchwort in mehreren Feldern steht
+  ['Firma', function (r) { return [g(r, 'Firma')]; }],
+  ['Amazon-Shop', function (r) { return [g(r, 'Amazon-Shopname')]; }],
+  ['Impressum', function (r) { return [g(r, 'Firmenname (Impressum)')]; }],
+  ['Geschäftsführer', function (r) { return [g(r, 'GF 1'), g(r, 'GF 2'), g(r, 'GF 3')]; }],
+  ['Kontakt in Close', function (r) { return String(g(r, 'Weitere Personen') || '').split('; '); }],
+  ['E-Mail', function (r) {
+    return [g(r, 'GF 1 E-Mail'), g(r, 'GF 2 E-Mail'), g(r, 'GF 3 E-Mail'), g(r, 'E-Mail (Impressum)')].concat(
+      String(g(r, 'Suchzusatz (E-Mails, Telefon)') || '').split(' ').filter(function (x) { return x.indexOf('@') > 0; }));
+  }],
+  ['Website', function (r) { return [g(r, 'Website')]; }],
+  ['GF auch bei', function (r) { return String(g(r, 'GF auch bei') || '').split('; '); }],
+  ['Betreut von', function (r) { return [g(r, 'Betreut von')]; }],
+  ['Produktgruppe', function (r) { return [g(r, 'Produktgruppe')]; }],
+  ['SID', function (r) { return [g(r, 'SID')]; }]
+];
+function enthaelt(v, t, t2) {
+  var n = ' ' + norm(v) + ' ' + normKurz(v) + ' ';
+  return n.indexOf(t) >= 0 || (t2 && n.indexOf(t2) >= 0);
+}
+function aehnelt(v, tri) {
+  return norm(v).replace(/[.@]/g, ' ').split(' ').some(function (w) { return w.length >= 3 && dice(tri, trigramme(w)) >= 0.6; });
+}
+function gruende(r, e) {
+  if (e.tel) {
+    var tels = [g(r, 'Telefon (Impressum)')].concat(String(g(r, 'Suchzusatz (E-Mails, Telefon)') || '').split(' ')
+      .filter(function (x) { return x.indexOf('tel:') === 0; }).map(function (x) { return x.slice(4); }));
+    var t = tels.filter(function (x) { var z = ziffern(x); return z.length >= 6 && (z.indexOf(e.dq) >= 0 || e.dq.indexOf(z) >= 0); })[0];
+    return t ? [{ f: 99, label: 'Telefon', wert: String(t) }] : [];
+  }
+  var out = [], gesehen = {};
+  function merke(f, v) { var k = f + '|' + v; if (!gesehen[k]) { gesehen[k] = 1; out.push({ f: f, label: FELDER[f][0], wert: v }); } }
+  e.tok.forEach(function (t, j) {
+    var t2 = e.kurz[j] !== t ? e.kurz[j] : null, f, w, werte;
+    for (f = 0; f < FELDER.length; f++) {
+      werte = FELDER[f][1](r).filter(Boolean);
+      for (w = 0; w < werte.length; w++) if (enthaelt(werte[w], t, t2)) { merke(f, werte[w]); return; }
+    }
+    if (t.length < 4) return;
+    var tri = trigramme(t.replace(/[.@]/g, ''));
+    for (f = 0; f < FELDER.length; f++) {
+      werte = FELDER[f][1](r).filter(Boolean);
+      for (w = 0; w < werte.length; w++) if (aehnelt(werte[w], tri)) { merke(f, werte[w]); return; }
+    }
+  });
+  return out;
+}
+function markiere(text, e) {
+  if (!e || !e.tok || !e.tok.length) return esc(text);
+  if (e.tel) return esc(text);
+  var tris = e.tok.map(function (t) { return t.length >= 4 ? trigramme(t.replace(/[.@]/g, '')) : null; });
+  return String(text == null ? '' : text).split(/(\s+)/).map(function (stueck) {
+    if (!stueck.trim()) return stueck;
+    var n = norm(stueck), k = normKurz(stueck);
+    var treffer = e.tok.some(function (t, j) {
+      if (n.indexOf(t) >= 0 || k.indexOf(e.kurz[j] || t) >= 0) return true;
+      return tris[j] && n.replace(/[.@]/g, ' ').split(' ').some(function (w) { return w.length >= 3 && dice(tris[j], trigramme(w)) >= 0.6; });
+    });
+    return treffer ? '<mark>' + esc(stueck) + '</mark>' : esc(stueck);
+  }).join('');
+}
+
+// ---------------------------------------------------------------- Anzeige
+function esc(s) {
+  return String(s == null ? '' : s).replace(/[&<>"']/g, function (c) {
+    return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c];
+  });
+}
+function eur(x) {
+  x = Number(x); if (!x) return '';
+  if (x >= 999500) return (x / 1e6).toLocaleString('de-DE', { maximumFractionDigits: 1 }) + ' Mio. €';
+  if (x >= 1e3) return Math.round(x / 1e3).toLocaleString('de-DE') + ' Tsd. €';
+  return Math.round(x).toLocaleString('de-DE') + ' €';
+}
+function pct(x) { x = Number(x); return x ? x.toLocaleString('de-DE', { maximumFractionDigits: 1 }) + ' %' : ''; }
+function url(u) { u = String(u || '').trim(); if (!u) return ''; return /^https?:\/\//.test(u) ? u : 'https://' + u; }
+function closeUrl(id) { return 'https://app.close.com/lead/' + id + '/'; }
+
+function badges(r) {
+  var b = [], st = String(g(r, 'Close-Status')), seg = String(g(r, 'Segment')), ei = String(g(r, 'Einladung Pre-Event'));
+  if (st === 'KUNDE: AKTIV') b.push('<span class="badge gruen">Kunde aktiv</span>');
+  else if (st === 'KUNDE: Churned') b.push('<span class="badge peach">Ex-Kunde</span>');
+  else if (st === 'Interessiert') b.push('<span class="badge blau">Close: Interessiert</span>');
+  else if (st) b.push('<span class="badge">Close: ' + esc(st) + '</span>');
+  else b.push('<span class="badge">nicht in Close</span>');
+  if (seg === 'Umsatzfreunde') b.push('<span class="badge blau">Umsatzfreunde</span>');
+  if (/^Interessiert/.test(ei)) b.push('<span class="badge stark">Einladung: interessiert</span>');
+  else if (/^Kein Interesse/.test(ei)) b.push('<span class="badge peach">Einladung: abgesagt</span>');
+  else if (/^Hat geantwortet/.test(ei)) b.push('<span class="badge blau">Einladung: geantwortet</span>');
+  else if (/^Angeschrieben/.test(ei)) b.push('<span class="badge">angeschrieben</span>');
+  if (g(r, 'Hinweis')) b.push('<span class="badge peach">⚠ Hinweis</span>');
+  return b.join('');
+}
+
+function karte(d, offen, e, top) {
+  var r = d.r, h = [];
+  var klasse = g(r, 'Umsatzklasse');
+  var groesse = d.umsatz ? '<span class="groesse">' + eur(d.umsatz) + '</span>'
+              : klasse ? '<span class="groesse klasse">Klasse ' + esc(klasse) + '</span>'
+              : g(r, 'Umsatz laut Close') ? '<span class="groesse klasse">' + esc(g(r, 'Umsatz laut Close')) + '</span>' : '';
+  var shop = String(g(r, 'Amazon-Shopname') || '');
+  var info = [g(r, 'Land'), String(g(r, 'Produktgruppe') || '').replace(/_/g, ' ')].filter(Boolean).map(esc).join(', ') +
+    (shop && norm(shop) !== norm(g(r, 'Firma')) ? ', Shop „' + esc(shop) + '“' : '');
+  var kpi = [];
+  if (g(r, 'Werbekosten 12 Mon. (EUR)')) kpi.push('<span><b>' + eur(g(r, 'Werbekosten 12 Mon. (EUR)')) + '</b> Werbung</span>');
+  if (g(r, 'ACOS %')) kpi.push('<span><b>' + pct(g(r, 'ACOS %')) + '</b> ACOS</span>');
+  if (g(r, 'TACOS %')) kpi.push('<span><b>' + pct(g(r, 'TACOS %')) + '</b> TACOS</span>');
+  var grund = e && e.tokens ? gruende(r, e).filter(function (x) { return x.f > 0; }).slice(0, 2) : [];
+  h.push('<div class="karte' + (offen ? ' offen' : '') + (top ? ' top' : '') + '">');
+  h.push('<button class="karte-kopf"><div class="zeile1"><span class="firma">' + markiere(g(r, 'Firma') || g(r, 'Amazon-Shopname'), e) +
+         '</span>' + groesse + '</div>' +
+         (kpi.length ? '<div class="kpis">' + kpi.join('') + '</div>' : '') +
+         '<div class="zeile2">' + badges(r) + (info ? '<span class="klein">' + info + '</span>' : '') + '</div>' +
+         grund.map(function (x) {
+           return '<div class="grund">Gefunden über <b>' + x.label + '</b>: ' +
+                  (x.f === 99 ? '<mark>' + esc(x.wert) + '</mark>' : markiere(x.wert, e)) + '</div>';
+         }).join('') + '</button>');
+  h.push('<div class="detail">');
+  if (g(r, 'Hinweis')) h.push('<div class="hinweis">' + esc(g(r, 'Hinweis')) + '</div>');
+
+  var z = [];
+  if (d.umsatz) z.push(['Umsatz 12 Monate', eur(d.umsatz)]);
+  if (g(r, 'Werbekosten 12 Mon. (EUR)')) z.push(['Werbekosten 12 Monate', eur(g(r, 'Werbekosten 12 Mon. (EUR)'))]);
+  if (g(r, 'ACOS %')) z.push(['ACOS', pct(g(r, 'ACOS %'))]);
+  if (g(r, 'TACOS %')) z.push(['TACOS', pct(g(r, 'TACOS %'))]);
+  if (!d.umsatz && klasse) z.push(['Amazon-Umsatzklasse', esc(klasse)]);
+  if (!d.umsatz && g(r, 'Umsatz laut Close')) z.push(['Umsatz laut Close', esc(g(r, 'Umsatz laut Close'))]);
+  if (z.length) {
+    h.push('<div class="zahlen">' + z.map(function (x) { return '<div class="zahl"><b>' + x[1] + '</b><span>' + x[0] + '</span></div>'; }).join('') + '</div>');
+    if (!d.umsatz && KLASSE_TEXT[klasse]) h.push('<div class="klein" style="margin-top:6px">Klasse ' + esc(klasse) + ': ' + KLASSE_TEXT[klasse] + '</div>');
+  }
+
+  var gf = [];
+  [1, 2, 3].forEach(function (i) {
+    var n = g(r, 'GF ' + i); if (!n) return;
+    var li = g(r, 'GF ' + i + ' LinkedIn'), m = g(r, 'GF ' + i + ' E-Mail');
+    gf.push('<div class="person"><div class="wer"><div>' + esc(n) + '</div>' + (m ? '<div class="mail">' + esc(m) + '</div>' : '') +
+            '</div>' + (li ? '<a class="mini" href="' + esc(url(li)) + '" target="_blank">LinkedIn</a>'
+                           : '<a class="mini hell" href="' + esc(linkedinSuche(n + ' ' + (g(r, 'Firma') || ''))) + '" target="_blank">LinkedIn suchen</a>') + '</div>');
+  });
+  if (gf.length) h.push('<div class="block"><h4>Geschäftsführung</h4>' + gf.join('') + '</div>');
+  if (g(r, 'Weitere Personen')) h.push('<div class="block"><h4>Kontakte in Close</h4><div class="klein">' + esc(g(r, 'Weitere Personen')) + '</div></div>');
+
+  var kv = [];
+  function zeile(k, v) { if (v) kv.push('<dt>' + k + '</dt><dd>' + v + '</dd>'); }
+  zeile('Amazon-Shop', esc(g(r, 'Amazon-Shopname')));
+  zeile('Impressum', esc(g(r, 'Firmenname (Impressum)')));
+  zeile('Close-Status', esc(g(r, 'Close-Status')));
+  zeile('Segment', esc(g(r, 'Segment')));
+  zeile('Betreut von', esc(g(r, 'Betreut von')));
+  zeile('Produkt', esc(g(r, 'Produkt')));
+  zeile('Einladung', esc(g(r, 'Einladung Pre-Event')));
+  zeile('E-Mail', esc(g(r, 'E-Mail (Impressum)')));
+  zeile('Telefon', g(r, 'Telefon (Impressum)') ? '<a href="tel:' + esc(String(g(r, 'Telefon (Impressum)')).replace(/[^\d+]/g, '')) + '">' + esc(g(r, 'Telefon (Impressum)')) + '</a>' : '');
+  zeile('GF auch bei', esc(g(r, 'GF auch bei')));
+  if (kv.length) h.push('<div class="block"><h4>Details</h4><dl class="liste-kv">' + kv.join('') + '</dl></div>');
+
+  var k = [];
+  if (g(r, 'Storefront')) k.push('<a class="knopf" href="' + esc(url(g(r, 'Storefront'))) + '" target="_blank">Storefront</a>');
+  String(g(r, 'Close-Lead-IDs') || '').split(',').map(function (x) { return x.trim(); }).filter(Boolean).forEach(function (id, i) {
+    k.push('<a class="knopf hell" href="' + closeUrl(id) + '" target="_blank">' + (i ? 'Close (2. Lead)' : 'In Close') + '</a>');
+  });
+  if (g(r, 'Website')) k.push('<a class="knopf hell" href="' + esc(url(g(r, 'Website'))) + '" target="_blank">Website</a>');
+  if (k.length) h.push('<div class="knoepfe">' + k.join('') + '</div>');
+  h.push('<div class="fuss">' + [g(r, 'SID') ? 'SID ' + esc(g(r, 'SID')) : '', 'Quelle: ' + esc(g(r, 'Quelle'))].filter(Boolean).join(', ') + '</div>');
+  h.push('</div></div>');
+  return h.join('');
+}
+
+function linkedinSuche(q) { return 'https://www.linkedin.com/search/results/people/?keywords=' + encodeURIComponent(q); }
+function nachschlagen(q, kompakt) {
+  var e = encodeURIComponent(q);
+  var links = [
+    ['LinkedIn', linkedinSuche(q)],
+    ['LinkedIn über Google', 'https://www.google.com/search?q=' + encodeURIComponent(q + ' site:linkedin.com/in')],
+    ['Google', 'https://www.google.com/search?q=' + encodeURIComponent('"' + q + '"')]
+  ];
+  if (!kompakt) links.push(['Amazon', 'https://www.amazon.de/s?k=' + e], ['North Data', 'https://www.northdata.com/' + e]);
+  return '<div class="knoepfe">' + links.map(function (l, i) {
+    return '<a class="knopf' + (i ? ' hell' : '') + '" href="' + esc(l[1]) + '" target="_blank">' + l[0] + '</a>';
+  }).join('') + '</div>';
+}
+function alternativ(q, titel, text) {
+  return '<div class="alternativ"><div class="alt-titel">' + titel + '</div>' + (text ? '<div class="klein">' + text + '</div>' : '') +
+         nachschlagen(q, true) + '</div>';
+}
+
+function zeichnen() {
+  var q = document.getElementById('q').value;
+  document.getElementById('leeren').style.display = q ? 'block' : 'none';
+  var main = document.getElementById('main');
+  var leer = !q.trim() && !filterGroesse && !filterStatus;
+  if (leer) {
+    var nSas = DATEN.filter(function (d) { return g(d.r, 'SID'); }).length;
+    var nClose = DATEN.filter(function (d) { return g(d.r, 'Close-Lead-IDs'); }).length;
+    main.innerHTML = '<p class="tipp">Tippe einen <b>Namen, eine Firma, Marke, Domain, E&#8209;Mail oder Telefonnummer</b>. Tippfehler sind okay.</p>' +
+      '<p class="tipp">' + DATEN.length.toLocaleString('de-DE') + ' Firmen im Index: ' + nSas.toLocaleString('de-DE') +
+      ' Amazon-SAS-Seller und ' + nClose.toLocaleString('de-DE') + ' mit Close-Lead.</p>' +
+      '<p class="tipp">Ohne Suchbegriff zeigen die Filter oben die größten Firmen zuerst.</p>';
+    return;
+  }
+  var e = suche(q), liste = e.liste, html = [];
+  if (!liste.length) {
+    html.push('<div class="leer"><h3>Nicht in unseren Daten</h3><div class="klein">Kein Treffer in der SAS-Liste und im Close-Auszug. ' +
+              'Bei Personen zeigt LinkedIn meist direkt, wo sie arbeiten. Mit dem Firmennamen dann hier nochmal suchen.</div>' +
+              (q.trim() ? nachschlagen(q.trim()) : '') + '</div>');
+  } else {
+    var zusatz = (e.aehnlich ? ', inklusive ähnlicher Schreibweisen' : '') + (liste.length > MAX ? ', die ersten ' + MAX + ' angezeigt' : '');
+    var nurAehnlich = e.tokens && liste.every(function (x) { return x.f; });
+    if (nurAehnlich) html.push(alternativ(q.trim(), 'Kein genauer Treffer', 'Unten stehen nur ähnliche Schreibweisen. Die Person direkt suchen:'));
+    if (e.tokens) {
+      html.push('<div class="abschnitt bester">' + (liste.length === 1 ? 'Treffer' : 'Bester Treffer') + '</div>');
+      html.push(karte(liste[0].d, true, e, true));
+      if (liste.length > 1) {
+        html.push('<div class="abschnitt">' + (liste.length - 1).toLocaleString('de-DE') + ' weitere Treffer' + zusatz + '</div>');
+        liste.slice(1, MAX).forEach(function (x) { html.push(karte(x.d, false, e, false)); });
+      }
+    } else {
+      html.push('<div class="meta">' + liste.length.toLocaleString('de-DE') + ' Treffer' + zusatz + '</div>');
+      liste.slice(0, MAX).forEach(function (x) { html.push(karte(x.d, false, e, false)); });
+    }
+  }
+  if (liste.length && e.tokens && !liste.every(function (x) { return x.f; })) {
+    html.push(alternativ(q.trim(), 'Nicht dabei?', 'Die Person direkt suchen:'));
+  }
+  html.push('<div id="live"></div>');
+  main.innerHTML = html.join('');
+  main.querySelectorAll('.karte-kopf').forEach(function (b) {
+    b.addEventListener('click', function () { b.parentNode.classList.toggle('offen'); });
+  });
+  liveSuche(q, liste);
+}
+
+// ---------------------------------------------------------------- Live in Close
+function liveSuche(q, liste) {
+  clearTimeout(liveTimer);
+  var nr = ++liveNr;
+  if (q.trim().length < 3) return;
+  var bekannt = {};
+  liste.forEach(function (x) {
+    String(g(x.d.r, 'Close-Lead-IDs') || '').split(',').forEach(function (id) { bekannt[id.trim()] = 1; });
+  });
+  liveTimer = setTimeout(function () {
+    var box = document.getElementById('live');
+    if (box) box.innerHTML = '<div class="ok">Close wird live geprüft …</div>';
+    DATENQUELLE.close(q.trim(), function (res) {
+      if (nr !== liveNr) return;
+      var box = document.getElementById('live'); if (!box) return;
+      if (!res.ok) { box.innerHTML = '<div class="ok">Live-Suche in Close nicht verfügbar: ' + esc(res.fehler) + '</div>'; return; }
+      var neu = res.leads.filter(function (l) { return !bekannt[l.id]; });
+      if (!neu.length) { box.innerHTML = '<div class="ok">✓ Close live geprüft, nichts Zusätzliches.</div>'; return; }
+      box.innerHTML = '<div class="live"><h4>Weitere Treffer direkt aus Close</h4>' + neu.map(function (l) {
+        return '<div class="live-zeile"><div><div class="firma" style="font-size:15px">' + esc(l.name) + '</div><div class="klein">' +
+          esc(l.status) + (l.personen.length ? ', ' + esc(l.personen.join(', ')) : '') + '</div></div>' +
+          '<a class="mini" href="' + closeUrl(l.id) + '" target="_blank">Öffnen</a></div>';
+      }).join('') + '</div>';
+    }, function (err) {
+      if (nr !== liveNr) return;
+      var box = document.getElementById('live');
+      if (box) box.innerHTML = '<div class="ok">Live-Suche in Close fehlgeschlagen: ' + esc(err && err.message) + '</div>';
+    });
+  }, 450);
+}
+
+// ---------------------------------------------------------------- Start
+document.getElementById('q').addEventListener('input', zeichnen);
+document.getElementById('leeren').addEventListener('click', function () {
+  var i = document.getElementById('q'); i.value = ''; i.focus(); zeichnen();
+});
+document.getElementById('filter').addEventListener('click', function (ev) {
+  var c = ev.target.closest('.chip'); if (!c) return;
+  if (c.dataset.g != null) {
+    filterGroesse = Number(c.dataset.g);
+    this.querySelectorAll('[data-g]').forEach(function (x) { x.classList.toggle('an', x === c); });
+  } else {
+    filterStatus = filterStatus === c.dataset.s ? '' : c.dataset.s;
+    this.querySelectorAll('[data-s]').forEach(function (x) { x.classList.toggle('an', x.dataset.s === filterStatus); });
+  }
+  zeichnen();
+});
+DATENQUELLE.index(function (daten) {
+  aufbereiten(daten);
+  document.getElementById('stand').textContent = STAND ? 'Stand ' + STAND : '';
+  zeichnen();
+  document.getElementById('q').focus();
+}, function (err) {
+  var main = document.getElementById('main');
+  if (err && err.anmelden) {
+    main.innerHTML = '<div class="leer"><h3>Einmal anmelden</h3><div class="klein">Die Suche ist nur mit einem ATLAS-Google-Konto nutzbar. ' +
+      'Danach bleibt dieses Gerät 90 Tage angemeldet.</div><div class="knoepfe"><a class="knopf" href="' + esc(DATENQUELLE.login) +
+      '" target="_self">Mit ATLAS-Konto anmelden</a></div></div>';
+    return;
+  }
+  main.innerHTML = '<div class="leer"><h3>Daten konnten nicht geladen werden</h3><div class="klein">' + esc(err && err.message) + '</div></div>';
+});
+</script>
+</body>
+</html>
