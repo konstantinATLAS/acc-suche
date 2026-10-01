@@ -217,7 +217,7 @@
 
 <script>
 var DATENQUELLE = (function () {
-  var API = "https://script.google.com/macros/s/AKfycbzclONJE3mTbhdtIYOIwNdxiLSq-9oKwb_e67Gnd0QT1pHueKWDIfm-E3G2r6jcPuC1/exec", LOGIN_A = "https://script.google.com/a/macros/atlasoperations.de/s/AKfycby0pHkULdPViSxz5jKb4lS4NKtCTbmirKZ_lk4V3-qHPfui7cgUkzSn3fr_vmzG4DaH/exec?login=1", CLIENT_ID = "", SEITE = "https://konstantinatlas.github.io/acc-suche/", KEY = 'acc_token';
+  var API = "https://script.google.com/macros/s/AKfycbzclONJE3mTbhdtIYOIwNdxiLSq-9oKwb_e67Gnd0QT1pHueKWDIfm-E3G2r6jcPuC1/exec", LOGIN_A = "https://script.google.com/a/macros/atlasoperations.de/s/AKfycby0pHkULdPViSxz5jKb4lS4NKtCTbmirKZ_lk4V3-qHPfui7cgUkzSn3fr_vmzG4DaH/exec?login=1", CLIENT_ID = "217571267224-fb0v3kncn3agrvea5lkfmcikslupbr6q.apps.googleusercontent.com", SEITE = "https://konstantinatlas.github.io/acc-suche/", KEY = 'acc_token';
   function token() { try { return localStorage.getItem(KEY) || ''; } catch (e) { return ''; } }
   function merken(k, v) { try { if (v == null) localStorage.removeItem(k); else localStorage.setItem(k, v); } catch (e) {} }
 
